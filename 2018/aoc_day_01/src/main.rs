@@ -1,21 +1,9 @@
-use std::env;
-use std::fs;
 use std::collections::HashSet;
 
-type Result<T> = std::result::Result<T, Box<dyn std::error::Error>>;
+use aoc_util::aoc_util::*;
 
-fn main() -> Result<()> {
-    let args: Vec<String> = env::args().collect();
-
-    match args.len() {
-        2 => println!("Will use file: {}", args[1]),
-        _ => {
-            println!("Need one filename to open.");
-            return Ok(());
-        }
-    };
-
-    let problem_input:String = fs::read_to_string(&args[1])?;
+fn main() -> AocResult<()> {
+    let problem_input:String = get_problem_input()?; 
 
     println!("Resulting frequency: {}", part_1(&problem_input)?);
     println!("First repeated frequency: {}", part_2(&problem_input)?);
@@ -23,7 +11,7 @@ fn main() -> Result<()> {
     Ok(())
 }
 
-fn part_1(input: &String) -> Result<i32>{
+fn part_1(input: &String) -> AocResult<i32>{
     let mut accumulator = 0;
 
     for ln in input.lines() {
@@ -34,7 +22,7 @@ fn part_1(input: &String) -> Result<i32>{
 }
 
 
-fn part_2(input: &String) -> Result<i32>{
+fn part_2(input: &String) -> AocResult<i32>{
     let mut seen = HashSet::<i32>::new();
 
     let mut accumulator = 0;
