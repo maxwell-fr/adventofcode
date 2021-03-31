@@ -14,11 +14,12 @@ fn main() -> AocResult<()> {
     Ok(())
 }
 
+///HashMap implementation. Looks nice but is actually considerably slower
+/// Likely saves memory, though.
 fn part_1a(input: &String) -> AocResult<i32> {
     let extents = parse_input(&input)?;
-    //println!("1a: {} entries found.", extents.len());
 
-    let mut overlaps: HashMap<(u32,u32), u32> = HashMap::with_capacity(250000);
+    let mut overlaps: HashMap<(u32,u32), u32> = HashMap::new();
     let mut count = 0;
     for e in extents {
         for x in e.x..e.x+e.w {
@@ -35,16 +36,14 @@ fn part_1a(input: &String) -> AocResult<i32> {
     Ok(count)
 }
 
+///2D array implementation
+/// Fast, preallocates a fair bit of memory
 fn part_1b(input: &String) -> AocResult<i32> {
     let extents = parse_input(&input)?;
-    println!("1b: {} entries found.", extents.len());
 
     //nope, stack buster
     //let mut overlaps: [[u32; 1000]; 1000] = [[0; 1000]; 1000];
-    let mut overlaps: Vec<[u32; 1000]> = Vec::new();
-    for i in 0..1000{
-        overlaps.push([0;1000]);
-    }
+    let mut overlaps: Vec<[u32; 1000]> = vec![[0; 1000]; 1000];
 
     let mut count = 0;
     for e in extents {
