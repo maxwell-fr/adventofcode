@@ -9,7 +9,9 @@ fn main() -> AocResult<()> {
     let after_a = Instant::now();
     println!("1b: Number of multiowner cells: {}", part_1b(&problem_input)?);
     let after_b = Instant::now();
-    println!("1a: {:?}  1b: {:?}", after_a - start, after_b - after_a);
+    println!("2: Non-overlapping extents: {:?}", part_2(&problem_input)?);
+    let after_2 = Instant::now();
+    println!("1a: {:?}  1b: {:?}  2: {:?}", after_a - start, after_b - after_a, after_2 - after_b);
 
     Ok(())
 }
@@ -60,6 +62,32 @@ fn part_1b(input: &String) -> AocResult<i32> {
     Ok(count)
 }
 
+/// return a vector of owner_id where each entry is a non-overlapping claim
+fn part_2(input: &String) -> AocResult<Vec<u32>> {
+    let extents = parse_input(&input)?;
+
+    let mut non_overlaps: Vec<u32> = Vec::new();
+
+    //test each extent against every other, checking for overlaps
+    //optimization potential: keep a list, so if e overlaps with f, f is also tagged on the first pass
+    'outer: for e in &extents {
+        for f in &extents {
+            //skip ourself
+            if e.owner_id == f.owner_id{
+                continue;
+            }
+            //short-circuit if we find an overlap
+            if overlap(&e, &f) {
+               continue 'outer; 
+            }
+        }
+        //e has no overlaps if we get here, add it to the list
+        non_overlaps.push(e.owner_id);
+    }
+
+    Ok(non_overlaps)
+}
+
 struct Extent {
     pub raw: String,
     pub owner_id: u32,
@@ -92,4 +120,22 @@ fn parse_input(input: &String) -> AocResult<Vec::<Extent>> {
     }
                
     Ok(parsed)
+}
+
+
+/// check if two extents overlap
+/// 
+fn overlap(e1: &Extent, e2: &Extent) -> bool {
+    // for readability
+    let e1x1 = e1.x;
+    let e1x2 = e1.x + e1.w - 1;
+    let e1y1 = e1.y;
+    let e1y2 = e1.y + e1.h - 1;
+    let e2x1 = e2.x;
+    let e2x2 = e2.x + e2.w - 1;
+    let e2y1 = e2.y;
+    let e2y2 = e2.y + e2.h - 1;
+
+    //bounding box test
+    e1x1 <= e2x2 && e1x2 >= e2x1 && e1y1 <= e2y2 && e1y2 >= e2y1  
 }
