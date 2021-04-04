@@ -5,19 +5,74 @@ use aoc_util::aoc_util::*;
 fn main() -> AocResult<()> {
     let problem_input = get_problem_input()?;
     let start = Instant::now();
-   // println!("1a: Number of multiowner cells: {}", part_1a(&problem_input)?);
-    let after_a = Instant::now();
-   // println!("1b: Number of multiowner cells: {}", part_1b(&problem_input)?);
-    let after_b = Instant::now();
-   // println!("2: Non-overlapping extents: {:?}", part_2(&problem_input)?);
-   let i = parse_input(&problem_input)?;
-   for e in i {
-       println!("{} {:?}", e.timecode, e.detail);
-   }
+    println!("1: Coded value: {}", part_1(&problem_input)?);
+    let after_1 = Instant::now();
+    println!("2: Coded value: {:?}", part_2(&problem_input)?);
     let after_2 = Instant::now();
-    println!("1a: {:?}  1b: {:?}  2: {:?}", after_a - start, after_b - after_a, after_2 - after_b);
+    println!("1: {:?}  2: {:?}", after_1 - start, after_2 - after_1 );
 
     Ok(())
+}
+
+/// strategy one: find guard with most asleep minutes, then find the minute most asleep
+fn part_1(input: &str) -> AocResult<u32> {
+    let entries = parse_input(input)?;
+
+    let guard_detail = fill_guard_details(&entries)?;
+
+    let mut sleepiest_minute = 0;
+    let mut sleepiest_minute_value = 0;
+    let mut sleepiest_total_minutes = 0;
+    let mut sleepiest_guard = 0;
+    //find the guard with the most sleeping minutes
+    for (guard, times) in &guard_detail {
+        let mut total_time = 0;
+        for t in 0..60 {
+            total_time += times[t];
+        }
+
+        if total_time > sleepiest_total_minutes {
+            sleepiest_total_minutes = total_time;
+            sleepiest_guard = *guard;
+        }
+    }
+
+    //find the most-slept minute for the guard selected above
+    for t in 0..60 {
+        if guard_detail[&sleepiest_guard][t] > sleepiest_minute_value {
+            sleepiest_minute = t as u32; 
+            sleepiest_minute_value = guard_detail[&sleepiest_guard][t];
+        }
+    }
+
+    println!("1: G:{} T:{} M:{} V:{}", sleepiest_guard, sleepiest_total_minutes, sleepiest_minute, sleepiest_minute_value);
+
+    Ok(sleepiest_minute * sleepiest_guard)
+}
+
+/// strategy two: find the particular minute with the most sleep and the guard that sleeps on that minute
+fn part_2(input: &str) -> AocResult<u32> {
+    let entries = parse_input(input)?;
+
+    let guard_detail = fill_guard_details(&entries)?;
+
+    let mut sleepiest_minute = 0;
+    let mut sleepiest_minute_value = 0;
+    let mut sleepiest_guard = 0;
+    //find the guard with the most sleeping minutes
+    for (guard, times) in &guard_detail {
+        for m in 0..60 {
+            if times[m] > sleepiest_minute_value {
+                sleepiest_minute = m as u32;
+                sleepiest_minute_value = times[m];
+                sleepiest_guard = *guard;
+            }
+        }
+    }
+
+    println!("2: G:{} M:{} V:{}", sleepiest_guard, sleepiest_minute, sleepiest_minute_value);
+
+    Ok(sleepiest_minute * sleepiest_guard)
 }
 
 #[derive(Debug)]
@@ -28,20 +83,68 @@ enum EntryDetail {
     Invalid
 }
 struct LogEntry {
-    year: u32,
-    month: u32,
-    day: u32,
     hour: u32,
     minute: u32,
     timecode: u64,
     detail: EntryDetail
 }
 
+/// build a detailed map of each guard's midnight hour
+fn fill_guard_details(entries: &Vec<LogEntry>) -> AocResult<HashMap<u32, [u32;60]>>{
+    let mut current_guard = 0;
+    enum State {
+        NoGuard,
+        Asleep(u32),
+        Awake(u32)
+    };
+    let mut state = State::NoGuard;
+    let mut guard_detail: HashMap<u32, [u32;60]> = HashMap::new();
+
+    //walk through the sorted entries, building a picture of the midnight hour for each guard
+    for e in entries {
+        match e.detail {
+            EntryDetail::GuardShiftBegin(g) => {
+                current_guard = g;
+                state = State::Awake (if e.hour != 0 {
+                    0
+                }
+                else {
+                    e.minute
+                });
+            },
+            EntryDetail::FallAsleep => {
+                match state {
+                    State::Awake(_) => (),
+                    _ => panic!("Falling asleep from non-awake state")
+                }
+                state = State::Asleep(e.minute);
+            },
+            EntryDetail::WakeUp => {
+                match state {
+                    State::Asleep(time) => {
+                        for m in time..e.minute {
+                            guard_detail.entry(current_guard).or_insert([0; 60])[m as usize] += 1;
+                        }
+                    },
+                    _ => panic!("Waking up from non-asleep state")
+                }
+                state = State::Awake(e.minute);
+            },
+            EntryDetail::Invalid => {
+                panic!("Invalid Entry");
+            }
+        }
+    }
+
+    Ok(guard_detail)
+}
+
+///Parse and chronologically sort the input file
 fn parse_input(input: &str) -> AocResult<Vec<LogEntry>> {
     let mut entries = Vec::new();
 
     for ln in input.lines() {
-        // Shortest line format: [1518-11-07 00:52] wakes up
+        //Shortest line format: [1518-11-07 00:52] wakes up
         //basic formatting check
         if !ln.contains(&['[', ']', '-', ':'][..]) || ln.len() < 27 {
             continue;
@@ -55,23 +158,23 @@ fn parse_input(input: &str) -> AocResult<Vec<LogEntry>> {
         let detail_str = &ln[19..];
         
         let detail = 
-        if detail_str.contains("wakes") {
-            EntryDetail::WakeUp
-        }
-        else if detail_str.contains("asleep") {
-            EntryDetail::FallAsleep
-        }
-        else if detail_str.contains("Guard #") && detail_str.contains("begins shift"){
-            let id: u32 = detail_str[detail_str.find('#').unwrap() + 1 .. detail_str.find(" begins").unwrap()].parse()?;
-            EntryDetail::GuardShiftBegin(id)
-        }
-        else {
-            EntryDetail::Invalid
-        };
+            if detail_str.contains("wakes") {
+                EntryDetail::WakeUp
+            }
+            else if detail_str.contains("asleep") {
+                EntryDetail::FallAsleep
+            }
+            else if detail_str.contains("Guard #") && detail_str.contains("begins shift"){
+                let id: u32 = detail_str[detail_str.find('#').unwrap() + 1 .. detail_str.find(" begins").unwrap()].parse()?;
+                EntryDetail::GuardShiftBegin(id)
+            }
+            else {
+                EntryDetail::Invalid
+            };
 
 
         entries.push(LogEntry{ 
-            year, month, day, hour, minute, timecode, detail
+            hour, minute, timecode, detail
         });
     }
 
