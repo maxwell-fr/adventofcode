@@ -1,5 +1,4 @@
 use std::time::Instant;
-use std::collections::HashMap;
 use aoc_util::aoc_util::*;
 
 fn main() -> AocResult<()> {
@@ -14,22 +13,33 @@ fn main() -> AocResult<()> {
     Ok(())
 }
 
-fn part_1(input: &str) -> AocResult<u32> {
-    assert!(input.is_ascii());
-    let input = input.as_bytes();
-    let input_len = input.len();
+fn part_1(in_str: &str) -> AocResult<u32> {
+    assert!(in_str.is_ascii());
+    let mut input  = Vec::from(in_str.as_bytes());
 
     let mut left = 0;
-    let mut right = 1;
     loop {
-        if annihilate(&input[left], &input[right]) {
-            
+        if annihilate(&input[left], &input[left+1]) {
+            input.remove(left+1);
+            input.remove(left);
+            if left > 0 {
+                left -= 1;
+            }
+            if left == input.len() - 1 {
+                break;
+            }
+        }
+        else {
+            left += 1;
+            if left >= input.len() - 1  {
+                break;
+            }
         }
     }
-    Ok(0)
+    Ok(input.len() as u32 - 1) //minus one to drop the terminating nul
 }
 
 ///checks if two bytes, when interpreted as ascii characters, should annihilate
 fn annihilate(a: &u8, b: &u8) -> bool {
-    true
+    return a > b && a - b == 32 || b > a && b - a == 32
 }
