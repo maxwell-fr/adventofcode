@@ -139,7 +139,7 @@ fn fill_guard_details(entries: &Vec<LogEntry>) -> AocResult<HashMap<u32, [u32;60
     Ok(guard_detail)
 }
 
-///Parse and chronologically sort the input file
+///Parse and chronologically sort the input.txt file
 fn parse_input(input: &str) -> AocResult<Vec<LogEntry>> {
     let mut entries = Vec::new();
 

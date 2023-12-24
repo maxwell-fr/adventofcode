@@ -97,7 +97,7 @@ struct Extent {
     pub h: u32
 }
 
-/// Parse input of the form
+/// Parse input.txt of the form
 /// #22 @ 121,2: 18x27
 /// ID^   X^  ^Y W^  ^H
 /// into a vector of Extents
