@@ -1,18 +1,13 @@
 use std::collections::HashMap;
 use aoc_util::aoc_util::*;
 
-//
-enum Parts {
-    One, Two
-}
-
 fn main() -> AocResult<()> {
     let problem_input = get_problem_input()?;
 
-    let part1 = solve(&problem_input, Parts::One)?;
+    let part1 = solve(&problem_input, AocParts::One)?;
     println!("Part 1: {part1}");
 
-    let part2 = solve(&problem_input, Parts::Two)?;
+    let part2 = solve(&problem_input, AocParts::Two)?;
     println!("Part 2: {part2}");
 
     Ok(())
@@ -24,12 +19,12 @@ fn main() -> AocResult<()> {
 /// Sum up all of these numbers to obtain result.
 /// For Part 2, do the same thing, but treat certain words as numbers when building
 /// Pass the appropriate Parts value to select part.
-fn solve(problem_input: &String, part: Parts) -> AocResult<u32> {
+fn solve(problem_input: &String, part: AocParts) -> AocResult<u32> {
     let problem_lines = problem_input.lines();
 
     let mut accumulator: u32 = 0;
     for line in problem_lines {
-        if let Some((left, right)) = find_digits(&line.to_string(), matches!(part, Parts::Two)) {
+        if let Some((left, right)) = find_digits(&line.to_string(), matches!(part, AocParts::Two)) {
             accumulator += (left * 10) + right;
         }
     }
@@ -109,12 +104,12 @@ mod tests {
     #[test]
     fn check_p1_results() {
         let problem_input = get_problem_input().unwrap();
-        assert_eq!(solve(&problem_input, Parts::One).unwrap(), 54634);
+        assert_eq!(solve(&problem_input, AocParts::One).unwrap(), 54634);
     }
     #[test]
     fn check_p2_results() {
         let problem_input = get_problem_input().unwrap();
-        assert_eq!(solve(&problem_input, Parts::Two).unwrap(), 53855);
+        assert_eq!(solve(&problem_input, AocParts::Two).unwrap(), 53855);
     }
 }
 
