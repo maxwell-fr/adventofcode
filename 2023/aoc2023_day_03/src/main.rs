@@ -66,7 +66,7 @@ impl Index<usize> for Grid {
     type Output = Vec<u8>;
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self[index]
+        &self.grid[index]
     }
 }
 
@@ -85,14 +85,21 @@ impl From<Vec<Vec<u8>>> for Grid {
 ///
 /// for part 1, find all of the numbers that "touch" a non-. symbol and sum them up
 fn solve(problem_input: &String, part: AocParts) -> AocResult<i32> {
-    let mut values: Vec<i32> = Vec::new();
     let mut grid: Vec<Vec<u8>> = Vec::new();
 
     for line in problem_input.lines() {
         grid.push(line.as_bytes().to_vec())
     }
 
-    let grid: Grid = grid.into();
+    match part {
+        AocParts::One => part_1(&grid.into()),
+        AocParts::Two => {todo!()}
+    }
+
+}
+
+fn part_1(grid: &Grid) -> AocResult<i32>{
+    let mut values: Vec<i32> = Vec::new();
 
     for row in 0..GRID_ROWS as i32 {
         let mut col: i32 = 0;
