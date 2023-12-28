@@ -6,8 +6,8 @@ fn main() -> AocResult<()> {
 
     let part1 = solve(&problem_input, AocParts::One)?;
     println!("Part 1: {part1}");
-    // let part2 = solve(&problem_input, AocParts::Two)?;
-    // println!("Part 2: {part2}");
+    let part2 = solve(&problem_input, AocParts::Two)?;
+    println!("Part 2: {part2}");
     Ok(())
 }
 
@@ -60,6 +60,28 @@ impl Grid {
         matches!(self.check_cell(row, col, 1, 0), CellType::Symbol(..)) ||
         matches!(self.check_cell(row, col, 1, 1), CellType::Symbol(..))
     }
+
+    fn get_number(&self, row: i32, col: i32) -> Option<i32> {
+        match self.check_cell(row, col, 0, 0) {
+            CellType::Nothing => {None}
+            CellType::Digit(_) => {
+                let mut start_offset: i32 = -1;
+                //find leftmost digit
+                while let CellType::Digit(_) = self.check_cell(row, col, 0, start_offset) {
+                    start_offset -= 1;
+                }
+                //find rightmost digit and build value
+                let mut value: i32 = 0;
+                let mut end_offset: i32 = start_offset + 1;
+                while let CellType::Digit(x) = self.check_cell(row, col, 0, end_offset) {
+                    value = (value * 10) + x as i32;
+                    end_offset += 1;
+                }
+                Some(value)
+            }
+            CellType::Symbol(_) => {None}
+        }
+    }
 }
 
 impl Index<usize> for Grid {
@@ -93,7 +115,7 @@ fn solve(problem_input: &String, part: AocParts) -> AocResult<i32> {
 
     match part {
         AocParts::One => part_1(&grid.into()),
-        AocParts::Two => {todo!()}
+        AocParts::Two => part_2(&grid.into())
     }
 
 }
@@ -147,6 +169,74 @@ fn part_1(grid: &Grid) -> AocResult<i32>{
     Ok(values.iter().sum())
 }
 
+fn part_2(grid: &Grid) -> AocResult<i32> {
+    let mut values: Vec<i32> = Vec::new();
+
+    for row in 0..GRID_ROWS as i32 {
+        let mut col: i32 = 0;
+        loop {
+            match grid.check_cell(row, col, 0, 0) {
+                CellType::Nothing => {
+                    col += 1;
+                }
+                CellType::Digit(_) => {
+                    col += 1;
+                }
+                CellType::Symbol(c) if c == '*' as u8 => {
+                    let mut numbers: Vec<i32> = Vec::new();
+                    //above symbol
+                    if let Some(n) = grid.get_number(row - 1, col ) { // above
+                        numbers.push(n);
+                    }
+                    else { // corners
+                        if let Some(n) = grid.get_number(row - 1, col - 1) { //upper left
+                            numbers.push(n);
+                        }
+                        if let Some(n) = grid.get_number(row - 1, col + 1) { //upper right
+                            numbers.push(n);
+                        }
+                    }
+
+                    //same row as symbol
+                    if let Some(n) = grid.get_number(row, col - 1) { //left
+                        numbers.push(n);
+                    }
+                    if let Some(n) = grid.get_number(row, col + 1) { //right
+                        numbers.push(n);
+                    }
+
+                    //below symbol
+                    if let Some(n) = grid.get_number(row + 1, col ) { //below
+                        numbers.push(n);
+                    }
+                    else { //corners
+                        if let Some(n) = grid.get_number(row + 1, col - 1) { //bottom left
+                            numbers.push(n);
+                        }
+                        if let Some(n) = grid.get_number(row + 1, col + 1) { //bottom right
+                            numbers.push(n);
+                        }
+                    }
+
+                    if numbers.len() == 2 {
+                        values.push(numbers.iter().product());
+                    }
+
+                    col += 1;
+                }
+                CellType::Symbol(_) => {
+                    col += 1;
+                }
+            }
+            if col >= GRID_COLS as i32 {
+                break;
+            }
+        }
+    }
+
+    Ok(values.iter().sum())
+}
+
 /// Tests to verify changes. Answer spoilers are here!
 #[cfg(test)]
 mod tests {
@@ -160,6 +250,6 @@ mod tests {
     #[test]
     fn check_p2_results() {
         let problem_input = get_problem_input().unwrap();
-        assert_eq!(solve(&problem_input, AocParts::Two).unwrap(), 0);
+        assert_eq!(solve(&problem_input, AocParts::Two).unwrap(), 79842967);
     }
 }
