@@ -105,7 +105,7 @@ impl From<Vec<Vec<u8>>> for Grid {
 
 /// Solve the problem.
 ///
-/// for part 1, find all of the numbers that "touch" a non-. symbol and sum them up
+/// invokes the solvers depending on the part parameter
 fn solve(problem_input: &String, part: AocParts) -> AocResult<i32> {
     let mut grid: Vec<Vec<u8>> = Vec::new();
 
@@ -120,6 +120,7 @@ fn solve(problem_input: &String, part: AocParts) -> AocResult<i32> {
 
 }
 
+/// for part 1, find all of the numbers that "touch" a non-. symbol and sum them up
 fn part_1(grid: &Grid) -> AocResult<i32>{
     let mut values: Vec<i32> = Vec::new();
 
@@ -169,6 +170,8 @@ fn part_1(grid: &Grid) -> AocResult<i32>{
     Ok(values.iter().sum())
 }
 
+/// for part 2, find all of the "gears" (*) that touch exactly two numbers
+/// and sum the products of each pair
 fn part_2(grid: &Grid) -> AocResult<i32> {
     let mut values: Vec<i32> = Vec::new();
 
@@ -188,7 +191,7 @@ fn part_2(grid: &Grid) -> AocResult<i32> {
                     if let Some(n) = grid.get_number(row - 1, col ) { // above
                         numbers.push(n);
                     }
-                    else { // corners
+                    else { // corners - there must be a gap between
                         if let Some(n) = grid.get_number(row - 1, col - 1) { //upper left
                             numbers.push(n);
                         }
@@ -209,7 +212,7 @@ fn part_2(grid: &Grid) -> AocResult<i32> {
                     if let Some(n) = grid.get_number(row + 1, col ) { //below
                         numbers.push(n);
                     }
-                    else { //corners
+                    else { //corners - there must be a gap between
                         if let Some(n) = grid.get_number(row + 1, col - 1) { //bottom left
                             numbers.push(n);
                         }
@@ -218,6 +221,7 @@ fn part_2(grid: &Grid) -> AocResult<i32> {
                         }
                     }
 
+                    // only multiply and store if there are exactly two numbers
                     if numbers.len() == 2 {
                         values.push(numbers.iter().product());
                     }
